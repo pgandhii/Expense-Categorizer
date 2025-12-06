@@ -1,57 +1,90 @@
-import json
-from typing import Dict, Tuple
+import json 
 from openai import OpenAI
-from config import OPENAI_API_KEY, OPENAI_MODEL
-from categories import build_category_list_string
+import sys, os
+sys.path.append(os.path.dirname(__file__))
 
+from config import OPENAI_API_KEY, OPENAI_MODEL, CONFIDENCE_THRESHOLD
+from categories import load_categories, build_category_list_string
+
+#Initialize client
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-def classify_expense(
-        merchant: str,
-        description: str,
-        categories: Dict[str, str]
-    ) -> Tuple[str, float]:
+def classify_expense(merchant: str, purpose: str):
     """
-    Classifies a single expense using the OpenAI model.
-    Returns: (chosen_category_code, confidence_score, reasoning)
+    Classifies an expense using BOTH merchant name and purpose.
+    Loads categories automatically (no need to pass anything in).
     """
-
-    category_list_text = build_category_list_string(categories)
-
+    categories = load_categories()
+    category_list = build_category_list_string(categories)
     prompt = f"""
+You are an AI assistant that helps classify business expenses. You MUST use BOTH the merchant name and 
+the purpose when choosing a category. 
 
-You are an expense categorization assistant.
+Some important rules to follow:
+1. Never reply on only the merchange name, unless there is no other information.
+2. Purpose is useful in classification. If there is purpose, use your best interpretation of the merchant.
+3. Amazon, walmart, target, etc are general merchants that sell everything. You MUST use the purpose to classify expenses from these merchants.
+4. If you are not confident in your classification (less than {CONFIDENCE_THRESHOLD}, return NEED TO CHECK.
+5. Give me the merchant name priority, and then use the purpose to clarify the purpose. For example, categories such as 
+'Travel Meals' and 'Meals and Entertainment' are very confusing without the purpose.
 
-Given:
-Merchant: "{merchant}"
-Description: "{description}"
+Here is a list of allowed categories (code -> name):
+{category_list}
 
-Choose ONE category from the list below based ONLY on meaning:
-{category_list_text}
+Please classify the following expenses:
+Marchant: {merchant}
+Purpose: {purpose}
 
-Return ONLY this JSON structure:
+Return ONLY valid JSON:
 {{
-  "category": "<CATEGORY_CODE>",
-  "confidence": <number between 0 and 100>,
-  "reasoning": "<short explanation>"
+"category_code":"<code>",
+"category_name":"<category name>",
+"confidence":<number between 0-100>,
+"reason":"<explanation for your choice>"
 }}
 """
-
     response = client.chat.completions.create(
         model=OPENAI_MODEL,
         messages=[{"role": "user", "content": prompt}]
     )
 
-    # Extract the text the model returned
-    raw_output = response.choices[0].message.content
+    raw_output = response.choices[0].message.content.strip()
 
     try:
-        parsed = json.loads(raw_output)
-        return (
-            parsed.get("category", "UNKNOWN"),
-            parsed.get("confidence", 0),
-            parsed.get("reasoning", "No reasoning provided.")
-        )
+        data = json.loads(raw_output)
     except json.JSONDecodeError:
-        return ("UNKNOWN", 0, f"Bad output from model: {raw_output}")
+        return {
+            "category_code": None,
+            "category_name": None,
+            "confidence": 0,
+            "final_result": "unclassified",
+            "reason": f"Failed to parse JSON response: {raw_output}"
+        }
+    
+    category_code = data.get("category_code")
+    category_name = data.get("category_name")
+    confidence = data.get("confidence", 0)
+    reason = data.get("reason", "")
 
+    if confidence < CONFIDENCE_THRESHOLD:
+        final_result = "NEED TO CHECK"
+    else:
+        final_result = category_code
+
+    return {
+        "category_code": category_code,
+        "category_name": category_name,
+        "confidence": confidence,
+        "final_result": final_result,
+        "reason": reason
+    }
+
+
+if __name__ == "__main__":
+    #Example usage
+    categories = load_categories
+    result = classify_expense(
+        merchant = "Meteor Cafe",
+        purpose = "Coffee"
+    )
+    print(result)

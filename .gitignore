@@ -1,2 +1,12 @@
 .env
 *.env
+
+data/
+output/
+
+*.xlsx
+*.csv
+*.xls
+
+#Ignore python cache
+__pycache__/

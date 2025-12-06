@@ -10,7 +10,7 @@ if not OPENAI_API_KEY:
 
 CATEGORIES_FILE = "data/categories.xlsx"
 
-CONFIDENCE_THRESHOLD = 70 #in percentage
+CONFIDENCE_THRESHOLD = 85 #in percentage
 
 OPENAI_MODEL = "gpt-5-nano" # Need to check if this is the right model
 

@@ -27,7 +27,7 @@ def load_categories() -> Dict[str, str]:
     if not code_col or not category_col:
         raise ValueError("Could not find 'Category Code' or 'Category' columns in Excel file.")
     
-    # emove blanks and zeros
+    # Remove blanks and zeros
     df = df[df[code_col].notna() & (df[code_col] != 0)]
 
     # Build dictionary
