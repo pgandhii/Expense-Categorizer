@@ -6,9 +6,9 @@ Contributor: Palak Gandhi
 # The Big Idea
 Manually categorizing business expenses is slow, repetitive and incredibly time consuming. This project is intended to automate that process.
 
-The expense categorizer reads an uploaded Excel file of expenses, analyzes the merchant name and purpose, and uses ChatGPT to classfiy each transaction into the correct accounting category.
+The expense categorizer reads an uploaded Excel file of expenses, analyzes the merchant name and purpose, and uses ChatGPT to classify each transaction into the correct accounting category.
 
-The output is an excel file with the following new columms:
+The output is an excel file with the following new columns:
 - Predicted category code
 - Category name
 - Confidence score
@@ -23,14 +23,37 @@ Here are the steps:
 2. Python reads the file using pandas
 3. Each row is passed to GPT, which then classfies the transaction using a custom set of categories
 4. The output is saved in a new Excel sheet under the "Output" folder. 
-5. The file automatically open on your computer.
+5. The file automatically opens on your computer.
 6. The user chooses if they want to delete the output file or not. This is for security purposes.
+
+# How can you use it:
+
+## Setup & Running the Project
+
+### Requirements
+- Python 3.10+ (or your version)
+- A valid OpenAI API key
+
+### Installation
+1. Clone the repository
+2. Install dependencies (pandas, openpyxl, tqdm, python, openai)
+3. Create a .env file in the project root with OPENAI_API_KEY = your_api_key_here
+   
+## Running the Program
+1. Place your input files in the data folder:
+* expenses_input.xlsx for raw expenses
+* categories.xlsx for your category list
+
+2. Run the main script
+python main.py
+
+3. The output file will be saved in the Output folder and will automatically open on your computer. You can then choose whether or not to delete it for security purposes.
 
 # Features
 * The software understands context with the help of ChatGPT
 * Handles Excel and CSV files
 * Progress bar to make it visually appealing
-* Data showed in .env, so it is not exposed to the public
+* Data stored in .env, so it is not exposed to the public
 * Easy to change the categories and logic
 
 # Usage Instructions
